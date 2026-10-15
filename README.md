@@ -76,3 +76,9 @@ src/
 3. `POST /identify` en el backend que reenvíe la foto a Pl@ntNet (la API key nunca en el frontend).
 4. Sustituir los imports de `data/mock.ts` por llamadas con `apiGet()`.
 5. PWA + service worker para el modo offline real.
+
+## Capturas
+
+![Pantallas 1](docs/capturas/pantallas_1.png)
+![Pantallas 2](docs/capturas/pantallas_2.png)
+![Pantallas 3](docs/capturas/pantallas_3.png)
