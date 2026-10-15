@@ -1,0 +1,13 @@
+// Componentes base del sistema de diseño. Importa siempre desde aquí:
+//   import { Button, ListItem } from '../components/ui'
+export { Badge } from './Badge'
+export { Button } from './Button'
+export { Card } from './Card'
+export { Chip } from './Chip'
+export { EmptyState } from './EmptyState'
+export { IconButton } from './IconButton'
+export { Input } from './Input'
+export { ListItem } from './ListItem'
+export { Radio } from './Radio'
+export { StatusDot } from './StatusDot'
+export { Switch } from './Switch'

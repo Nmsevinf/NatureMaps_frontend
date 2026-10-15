@@ -1,0 +1,77 @@
+/* ==========================================================================
+   TOKENS DE DISEÑO — Nature MAPS
+   Única fuente de colores, tipografía, espaciados y radios.
+   Ningún componente debe usar valores "a mano": siempre var(--…).
+   Colores sacados del prototipo de Figma.
+   ========================================================================== */
+
+:root {
+  /* Marca */
+  --color-green: #2b6942;
+  --color-warm: #b8863b;
+
+  /* Texto y superficies */
+  --color-text: #1f2937;
+  --color-text-2: #48504d;
+  --color-muted: #6b7273;
+  --color-muted-2: #9aa0a0;
+  --color-line: #e8e8e3;
+  --color-surface: #ffffff;
+  --color-danger: #e85d5d;
+
+  /* Acento: cambia según el modo (ver abajo) */
+  --color-accent: var(--color-green);
+  --color-accent-2: #4f8f5f;
+  --color-accent-soft: #e7eedd;
+  --color-on-accent: #ffffff;
+  --color-bg: #f9f9f6;
+
+  /* Tipografía */
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-xs: 11.5px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 23px;
+
+  /* Espaciado (múltiplos de 4) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Formas */
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  /* Layout */
+  --app-max-width: 480px;
+  --gutter: var(--space-5);
+}
+
+/* Acento por modo — lo activa AppContext con <html data-mode="…"> */
+html[data-mode='aventura'] {
+  --color-accent: #6c4ce0;
+  --color-accent-2: #9b6bef;
+  --color-accent-soft: #ede7fb;
+  --color-bg: #f6f3fe;
+}
+html[data-mode='descubridor'],
+html[data-mode='esencial'] {
+  --color-accent: #1f7a6c;
+  --color-accent-2: #3a9b8b;
+  --color-accent-soft: #dceee9;
+  --color-bg: #f1f7f5;
+}
+html[data-mode='educativo'] {
+  --color-accent: #2f8fe0;
+  --color-accent-2: #57b4f0;
+  --color-accent-soft: #dbeeff;
+  --color-bg: #eaf6ff;
+}

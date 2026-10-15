@@ -3,22 +3,22 @@ import { dictionaries, type StringKey } from '../i18n/strings'
 import type { Lang, Mode } from '../types'
 import { AppContext, type AppState } from './state'
 
+// Estado global: modo elegido e idioma. Se guarda en localStorage.
 const STORAGE_KEY = 'naturemaps:prefs'
 
 interface Prefs {
   mode: Mode | null
   lang: Lang
-  passiveNotifications: boolean
 }
 
 function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return { mode: null, lang: 'es', passiveNotifications: true, ...JSON.parse(raw) }
+    if (raw) return { mode: null, lang: 'es', ...JSON.parse(raw) }
   } catch {
     /* almacenamiento no disponible: usamos valores por defecto */
   }
-  return { mode: null, lang: 'es', passiveNotifications: true }
+  return { mode: null, lang: 'es' }
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -48,7 +48,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...prefs,
       setMode: (mode) => setPrefs((p) => ({ ...p, mode })),
       setLang: (lang) => setPrefs((p) => ({ ...p, lang })),
-      setPassiveNotifications: (passiveNotifications) => setPrefs((p) => ({ ...p, passiveNotifications })),
       t,
     }),
     [prefs, t],

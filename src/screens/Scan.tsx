@@ -1,140 +1,91 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Icon } from '../components/Icon'
+import { Page } from '../components/layout/Page'
+import { Button, Card } from '../components/ui'
 import { useApp } from '../context/useApp'
-import { findPlant } from '../data/mock'
 
-type ScanMode = 'planta' | 'monumento'
-
-interface Candidate {
-  id: string
-  score: number
-}
-
-// Resultado simulado. Aquí irá la llamada al backend → Pl@ntNet (RNF2: API externa, sin modelo propio).
-const MOCK_PLANT_RESULT: Candidate[] = [
-  { id: 'ficus', score: 0.86 },
-  { id: 'laurel', score: 0.08 },
-  { id: 'naranjo', score: 0.03 },
-]
-
-/** 1.3.A / 1.5.2 — Identificar planta o monumento con la cámara. */
+/**
+ * Escanear: cámara trasera real (requiere HTTPS o localhost) o foto de la galería.
+ * La foto queda en `photo` (Blob) lista para enviarla al backend → Pl@ntNet.
+ */
 export function Scan() {
   const { t } = useApp()
-  const navigate = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  const [mode, setMode] = useState<ScanMode>('planta')
-  const [cameraOn, setCameraOn] = useState(false)
-  const [flash, setFlash] = useState(false)
-  const [state, setState] = useState<'idle' | 'analyzing' | 'results'>('idle')
+  const [cameraOk, setCameraOk] = useState(() => Boolean(navigator.mediaDevices?.getUserMedia))
+  // Foto capturada + URL temporal para mostrarla
+  const [shot, setShot] = useState<{ blob: Blob; url: string } | null>(null)
+  const photo = shot?.blob ?? null
+  const previewUrl = shot?.url ?? null
 
-  // Vista previa de la cámara trasera (requiere HTTPS o localhost).
+  const setPhoto = (blob: Blob | null) => setShot(blob ? { blob, url: URL.createObjectURL(blob) } : null)
+
+  // Libera la URL temporal cuando cambia la foto o se sale de la pantalla
+  useEffect(() => () => void (shot && URL.revokeObjectURL(shot.url)), [shot])
+
+  // Enciende la cámara mientras no haya foto; la apaga al salir.
   useEffect(() => {
+    if (photo || !navigator.mediaDevices?.getUserMedia) return
     let stream: MediaStream | undefined
     let cancelled = false
     navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
       .then((s) => {
         if (cancelled) return s.getTracks().forEach((tr) => tr.stop())
         stream = s
         if (videoRef.current) videoRef.current.srcObject = s
-        setCameraOn(true)
+        setCameraOk(true)
       })
-      .catch(() => setCameraOn(false))
+      .catch(() => setCameraOk(false))
     return () => {
       cancelled = true
       stream?.getTracks().forEach((tr) => tr.stop())
     }
-  }, [])
+  }, [photo])
 
-  const analyze = () => {
-    setFlash(true)
-    setTimeout(() => setFlash(false), 400)
-    setState('analyzing')
-    setTimeout(() => {
-      if (mode === 'monumento') navigate('/monumento/serranos?nuevo=1')
-      else setState('results')
-    }, 900)
+  const capture = () => {
+    const video = videoRef.current
+    if (!video || !video.videoWidth) return
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    canvas.getContext('2d')?.drawImage(video, 0, 0)
+    canvas.toBlob((b) => b && setPhoto(b), 'image/jpeg', 0.9)
   }
 
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) analyze()
+    const file = e.target.files?.[0]
+    if (file) setPhoto(file)
     e.target.value = ''
   }
 
-  const accent = mode === 'planta' ? 'var(--scan-plant)' : 'var(--scan-monument)'
-
   return (
-    <div className="screen scan" style={{ ['--scan-accent' as string]: accent }}>
-      <video ref={videoRef} className={`scan__video${cameraOn ? ' on' : ''}`} autoPlay playsInline muted />
-      <div className="scan__glow" />
-      <div className={`scan__flash${flash ? ' on' : ''}`} />
-
-      <div className="scan__top">
-        <button className="icon-btn icon-btn--glass" onClick={() => navigate(-1)} aria-label={t('common.back')}>
-          <Icon name="back" size={16} strokeWidth={2.4} />
-        </button>
-        <div className="segmented segmented--glass">
-          <button className={mode === 'planta' ? 'on' : ''} onClick={() => setMode('planta')}>
-            🌿 {t('scan.plant')}
-          </button>
-          <button className={mode === 'monumento' ? 'on' : ''} onClick={() => setMode('monumento')}>
-            🏛️ {t('scan.monument')}
-          </button>
-        </div>
-        <span style={{ width: 36 }} />
+    <Page title={t('scan.title')} subtitle={t('scan.hint')}>
+      <div className="scan-view">
+        {previewUrl ? (
+          <img src={previewUrl} alt="" className="scan-view__media" />
+        ) : cameraOk ? (
+          <video ref={videoRef} className="scan-view__media" autoPlay playsInline muted />
+        ) : (
+          <p className="scan-view__msg">{t('scan.noCamera')}</p>
+        )}
       </div>
 
-      {state !== 'results' ? (
+      {photo ? (
         <>
-          <div className="scan__frame">
-            <svg width="230" height="230" viewBox="0 0 260 260" fill="none">
-              {['M8 40V16a8 8 0 0 1 8-8h24', 'M252 40V16a8 8 0 0 0-8-8h-24', 'M8 220v24a8 8 0 0 0 8 8h24', 'M252 220v24a8 8 0 0 1-8 8h-24'].map((d) => (
-                <path key={d} d={d} stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              ))}
-            </svg>
-          </div>
-          <div className="scan__hint">
-            <div>{state === 'analyzing' ? t('scan.analyzing') : mode === 'planta' ? t('scan.hintPlant') : t('scan.hintMonument')}</div>
-            <small>{mode === 'planta' ? t('scan.subPlant') : t('scan.subMonument')}</small>
-          </div>
-          <div className="scan__controls">
-            <button className="icon-btn icon-btn--glass icon-btn--lg" onClick={() => fileRef.current?.click()} aria-label={t('scan.gallery')}>
-              <Icon name="image" size={20} />
-            </button>
-            <button className="shutter" onClick={analyze} disabled={state === 'analyzing'} aria-label="Capturar" />
-            <span style={{ width: 48 }} />
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
+          <Card>{t('scan.pending')}</Card>
+          <Button variant="secondary" icon="refresh" block onClick={() => setPhoto(null)}>
+            {t('scan.retake')}
+          </Button>
         </>
       ) : (
-        <div className="scan__results">
-          <h2>{t('scan.results')}</h2>
-          {MOCK_PLANT_RESULT.map((c, i) => {
-            const p = findPlant(c.id)!
-            return (
-              <button key={c.id} className={`result${i === 0 ? ' result--best' : ''}`} onClick={() => navigate(`/planta/${p.id}?nuevo=1`)}>
-                <span className="thumb">
-                  <Icon name="leaf" />
-                </span>
-                <span className="row-card__text">
-                  <span className="row-card__title">{p.scientificName}</span>
-                  <span className="row-card__sub">
-                    {Math.round(c.score * 100)}% {t('scan.confidence')}
-                  </span>
-                  <span className="bar">
-                    <span style={{ width: `${c.score * 100}%` }} />
-                  </span>
-                </span>
-              </button>
-            )
-          })}
-          <button className="btn btn--ghost-light btn--block" onClick={() => setState('idle')}>
-            {t('common.back')}
-          </button>
+        <div className="scan-actions">
+          <Button variant="secondary" icon="image" onClick={() => fileRef.current?.click()}>
+            {t('scan.gallery')}
+          </Button>
+          {cameraOk && <button className="shutter" onClick={capture} aria-label={t('scan.title')} />}
         </div>
       )}
-    </div>
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
+    </Page>
   )
 }
