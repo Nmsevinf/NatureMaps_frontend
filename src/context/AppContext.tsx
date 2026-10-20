@@ -4,21 +4,31 @@ import type { Lang, Mode } from '../types'
 import { AppContext, type AppState } from './state'
 
 // Estado global: modo elegido e idioma. Se guarda en localStorage.
-const STORAGE_KEY = 'naturemaps:prefs'
+const STORAGE_KEY = 'naturemaps:prefs' // solo { mode }
+// Misma clave que usa el selector de idioma de Ajustes (feat/selector-idioma): texto 'es' | 'va' | 'en'
+const LANG_KEY = 'naturemaps.language'
 
 interface Prefs {
   mode: Mode | null
   lang: Lang
 }
 
+function isLang(v: unknown): v is Lang {
+  return v === 'es' || v === 'va' || v === 'en'
+}
+
 function loadPrefs(): Prefs {
+  let mode: Mode | null = null
+  let lang: Lang = 'es'
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return { mode: null, lang: 'es', ...JSON.parse(raw) }
+    if (raw) mode = JSON.parse(raw).mode ?? null
+    const storedLang = localStorage.getItem(LANG_KEY)
+    if (isLang(storedLang)) lang = storedLang
   } catch {
     /* almacenamiento no disponible: usamos valores por defecto */
   }
-  return { mode: null, lang: 'es' }
+  return { mode, lang }
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -26,7 +36,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: prefs.mode }))
+      localStorage.setItem(LANG_KEY, prefs.lang)
     } catch {
       /* ignorar */
     }
