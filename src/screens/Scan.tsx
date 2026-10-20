@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { Page } from '../components/layout/Page'
 import { Button, Card } from '../components/ui'
 import { useApp } from '../context/useApp'
+import { hasSeenCameraPermission } from '../utils/cameraPermission'
 
 /**
  * Escanear: cámara trasera real (requiere HTTPS o localhost) o foto de la galería.
  * La foto queda en `photo` (Blob) lista para enviarla al backend → Pl@ntNet.
+ * La primera vez se pasa antes por la pantalla "Permiso cámara" (/permiso-camara).
  */
 export function Scan() {
   const { t } = useApp()
+  const location = useLocation()
+  const handled = (location.state as { permissionHandled?: boolean } | null)?.permissionHandled
+  const needsPermission = !handled && !hasSeenCameraPermission() && Boolean(navigator.mediaDevices?.getUserMedia)
   const videoRef = useRef<HTMLVideoElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [cameraOk, setCameraOk] = useState(() => Boolean(navigator.mediaDevices?.getUserMedia))
@@ -24,7 +30,7 @@ export function Scan() {
 
   // Enciende la cámara mientras no haya foto; la apaga al salir.
   useEffect(() => {
-    if (photo || !navigator.mediaDevices?.getUserMedia) return
+    if (needsPermission || photo || !navigator.mediaDevices?.getUserMedia) return
     let stream: MediaStream | undefined
     let cancelled = false
     navigator.mediaDevices
@@ -40,7 +46,7 @@ export function Scan() {
       cancelled = true
       stream?.getTracks().forEach((tr) => tr.stop())
     }
-  }, [photo])
+  }, [photo, needsPermission])
 
   const capture = () => {
     const video = videoRef.current
@@ -57,6 +63,8 @@ export function Scan() {
     if (file) setPhoto(file)
     e.target.value = ''
   }
+
+  if (needsPermission) return <Navigate to="/permiso-camara" replace />
 
   return (
     <Page title={t('scan.title')} subtitle={t('scan.hint')}>

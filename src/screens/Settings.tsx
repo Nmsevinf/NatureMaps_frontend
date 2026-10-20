@@ -3,10 +3,9 @@ import { checkHealth } from '../api/client'
 import { Page } from '../components/layout/Page'
 import { ListItem, StatusDot } from '../components/ui'
 import { useApp } from '../context/useApp'
-import { LANG_LABELS } from '../i18n/strings'
 
 export function Settings() {
-  const { t, lang, mode } = useApp()
+  const { t, mode } = useApp()
   const [server, setServer] = useState<'checking' | 'ok' | 'error'>('checking')
 
   // Comprueba de verdad el backend (GET /health)
@@ -19,7 +18,6 @@ export function Settings() {
   return (
     <Page title={t('settings.title')} back>
       <div className="list">
-        <ListItem icon="globe" title={t('settings.language')} subtitle={LANG_LABELS[lang]} to="/ajustes/idioma" />
         <ListItem icon="refresh" title={t('settings.changeMode')} subtitle={mode ? t(`mode.${mode}`) : undefined} to="/modo" />
         <ListItem icon="image" title={t('settings.components')} to="/componentes" />
       </div>

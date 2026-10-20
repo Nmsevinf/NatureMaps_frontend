@@ -7,6 +7,7 @@ import { Language } from './screens/Language'
 import { MapScreen } from './screens/MapScreen'
 import { ModeSelect } from './screens/ModeSelect'
 import { NotFound } from './screens/NotFound'
+import { PermisoCamara } from './screens/PermisoCamara'
 import { RoutesList } from './screens/RoutesList'
 import { Scan } from './screens/Scan'
 import { Search } from './screens/Search'
@@ -33,6 +34,7 @@ export default function App() {
         {/* Sin barra inferior */}
         <Route element={<FullLayout />}>
           <Route path="/modo" element={<ModeSelect />} />
+          <Route path="/permiso-camara" element={<PermisoCamara />} />
           <Route path="/ajustes" element={<Settings />} />
           <Route path="/ajustes/idioma" element={<Language />} />
           <Route path="/componentes" element={<Components />} />
